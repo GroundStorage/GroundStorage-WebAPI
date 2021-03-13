@@ -9,7 +9,7 @@ namespace Ground_Storage_WebAPI.Models
         public Guid? Rev { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public Guid? CreatorId { get; set; }
+        public string CreatorId { get; set; }
         public string KeySearch { get; set; }
         public KeySearchType KeySearchType { get; set; }
     }

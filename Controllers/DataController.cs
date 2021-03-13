@@ -51,6 +51,15 @@ namespace Ground_Storage_WebAPI.Controllers
                     });
                     _dbContext.SaveChanges();
                     recordInDB = recordEntry.Entity;
+                    foreach (string key in recordKeys)
+                    {
+                        _dbContext.Keys.Add(new Key()
+                        {
+                            RecordId = recordInDB.Id,
+                            Name = key
+                        });
+                    }
+                    _dbContext.SaveChanges();
                 }
                 else // Updating
                 {
@@ -81,18 +90,26 @@ namespace Ground_Storage_WebAPI.Controllers
                     recordInDB.Keys = record.Keys;
                     recordInDB.Body = record.Body;
 
-                    _dbContext.Keys.RemoveRange(_dbContext.Keys.Where(key => key.RecordId == recordInDB.Id && recordKeys.Contains(key.Name)));
-                }
-
-                foreach (string key in recordKeys.Where(recordKey => !_dbContext.Keys.Any(key => key.Name == recordKey)))
-                {
-                    _dbContext.Keys.Add(new Key()
+                    var keysToRemove = _dbContext.Keys.Where(key => key.RecordId == recordInDB.Id && recordKeys.Contains(key.Name));
+                    if (keysToRemove.Count() > 0)
                     {
-                        RecordId = recordInDB.Id,
-                        Name = key
-                    });
+                        _dbContext.Keys.RemoveRange(keysToRemove);
+                    }
+
+                    var keysToAdd = recordKeys.Where(recordKey => !_dbContext.Keys.Any(key => key.RecordId == recordInDB.Id && key.Name == recordKey));
+                    if (keysToAdd.Count() > 0)
+                    {
+                        foreach (string key in keysToAdd)
+                        {
+                            _dbContext.Keys.Add(new Key()
+                            {
+                                RecordId = recordInDB.Id,
+                                Name = key
+                            });
+                        }
+                        _dbContext.SaveChanges();
+                    }
                 }
-                _dbContext.SaveChanges();
 
                 return Ok(new ActionOutputSuccess<Record_Get>
                 {
@@ -107,13 +124,13 @@ namespace Ground_Storage_WebAPI.Controllers
                         CreatorId = recordInDB.CreatorId,
                         Keys = recordInDB.Keys,
                         Body = recordInDB.Body,
-                        Conflicts = recordInDB.Conflicts.Select(conflict => conflict.Rev).ToArray(),
+                        Conflicts = recordInDB.Conflicts?.Select(conflict => conflict.Rev).ToArray(),
                     }
                 });
             }
             catch (System.Exception error)
             {
-                return BadRequest(new ActionOutputError<Exception>{ Error = error});
+                return BadRequest(new ActionOutputError<Exception> { Error = error });
             }
         }
 
@@ -166,12 +183,13 @@ namespace Ground_Storage_WebAPI.Controllers
                         && (search.Rev == null || record.Rev == search.Rev.Value)
                         && (search.CreatedAt == null || record.CreatedAt == search.CreatedAt.Value)
                         && (search.UpdatedAt == null || record.UpdatedAt == search.UpdatedAt.Value)
-                        && (search.CreatorId == null || record.CreatorId == search.CreatorId.Value)
+                        && (search.CreatorId == null || record.CreatorId == search.CreatorId)
                     )
                     .Select(record => new Record_Get()
                     {
                         Entity = record.Entity,
                         Id = record.Id,
+                        OfflineId = record.OfflineId,
                         Rev = record.Rev,
                         CreatedAt = record.CreatedAt,
                         UpdatedAt = record.UpdatedAt,

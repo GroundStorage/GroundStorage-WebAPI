@@ -20,10 +20,10 @@ namespace Ground_Storage_WebAPI.Models
         [Key]
         public Guid Id { get; set; } // Auto fill
         public Guid Rev { get; set; } // Auto fill
-        public Guid OfflineId { get; set; }
+        public string OfflineId { get; set; }
         public DateTime CreatedAt { get; set; } // Auto fill
         public DateTime UpdatedAt { get; set; } // Auto fill
-        public Guid CreatorId { get; set; }
+        public string CreatorId { get; set; }
         public string Keys { get; set; }
         public string Body { get; set; }
 
